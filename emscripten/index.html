@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <script src="laz-perf.js"></script>
+  <script>
+	var loadFileAsArrayBuffer = function(url, cb) {
+		var oReq = new XMLHttpRequest();
+		oReq.open("GET", url, true);
+		oReq.responseType = "arraybuffer";
+
+		oReq.onload = function (oEvent) {
+			var arrayBuffer = oReq.response; // Note: not oReq.responseText
+			cb(arrayBuffer);
+		};
+
+		oReq.send(null);
+	}
+
+	function parse(dv) {
+		return {
+			"position": [ dv.getInt32(0, true), dv.getInt32(4, true), dv.getInt32(8, true)],
+				"intensity": dv.getUint16(12, true),
+				"classification": dv.getUint8(16, true)
+		};
+	}
+
+	document.addEventListener('DOMContentLoaded', function() {
+			loadFileAsArrayBuffer('/haloe.laz', function(ab) {
+				console.log('got array buffer', ab.byteLength);
+				var x = new Module.LASZip();
+
+				var abInt = new Uint8Array(ab);
+				var buf = Module._malloc(ab.byteLength);
+
+				Module.HEAPU8.set(abInt, buf);
+				x.open(buf, ab.byteLength);
+
+				var pointc = x.getCount();
+				console.log("total points:", pointc);
+
+				var pointbuf = Module._malloc(40);
+				var tstart = (new Date()).getTime();
+				for (var i = 0 ; i < pointc ; i ++) {
+					x.getPoint(pointbuf);
+					var p = parse(new DataView(Module.HEAPU8.buffer, pointbuf, 40));
+					//console.log(p);
+				}
+				var tend = (new Date()).getTime();
+
+				console.log("Read 1000 points!", (tend - tstart), "ms");
+
+				//x.getPoint();
+
+				Module._free(buf);
+
+				try {
+					x.delete();
+				} catch(e) {
+					console.log("deletion failed!", e);
+				}
+			});
+
+	});
+  </script>
+</html>
