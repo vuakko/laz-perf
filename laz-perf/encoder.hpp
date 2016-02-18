@@ -56,7 +56,7 @@ namespace laszip {
 
 			void done() {
 				U32 init_base = base;                 // done encoding: set final data bytes
-				BOOL another_byte = TRUE;
+				bool another_byte = TRUE;
 
 				if (length > 2 * AC__MinLength) {
 					base  += AC__MinLength;                                     // base offset
