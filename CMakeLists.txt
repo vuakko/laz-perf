@@ -108,14 +108,14 @@ if(WIN32)
   endif()
 
   set(LAZPERF_PLATFORM_WIN32 1)
-
-else()
+endif(WIN32)
+# else()
   # not WIN32
 
   # Recommended C++ compilation flags
   # -Weffc++
   set(LAZPERF_COMMON_CXX_FLAGS
-	  "-std=c++11 -Wextra -Wall -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long -fPIC -pedantic")
+	  "-std=c++11 -fpermissive -Wextra -Wall -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long -fPIC -pedantic")
 
   if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
@@ -143,7 +143,7 @@ else()
   else ()
 	  message(FATAL_ERROR "Your C++ compiler does not support C++11.")
   endif ()
-endif(WIN32)
+# endif(WIN32)
 
 if (APPLE)
   set(SO_EXT dylib)
