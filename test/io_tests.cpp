@@ -579,3 +579,22 @@ TEST(io_tests, issue22)
         EXPECT_EQ(cls[i], p10.classification);
     }
 }
+
+TEST(io_tests, writer_config_uses_preset_header) {
+	using namespace laszip;
+
+	io::header in = {};
+	in.file_source_id = 1;
+	strcpy(in.guid, "1234");
+	strcpy(in.system_identifier, "TEST");
+	strcpy(in.generating_software, "test");
+	in.creation = {54, 2016};
+	io::header h = io::writer::config(in).to_header();
+
+	EXPECT_EQ(h.file_source_id, 1);
+	EXPECT_EQ(strncmp(h.guid, "1234", 4), 0);
+	EXPECT_EQ(strncmp(h.system_identifier, "TEST", 4), 0);
+	EXPECT_EQ(strncmp(h.generating_software, "test", 4), 0);
+	EXPECT_EQ(h.creation.day, 54);
+	EXPECT_EQ(h.creation.year, 2016);
+}

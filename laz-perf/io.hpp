@@ -31,6 +31,7 @@
 #ifndef __io_hpp__
 #define __io_hpp__
 
+#include <ctime>
 #include <fstream>
 #include <limits>
 #include <string.h>
@@ -749,26 +750,39 @@ namespace laszip {
 
 			// An object to encapsulate what gets passed to
 			struct config {
-				vector3<double> scale, offset;
+				header base = {};
 				unsigned int chunk_size;
 
-				explicit config() : scale(1.0, 1.0, 1.0), offset(0.0, 0.0, 0.0), chunk_size(DefaultChunkSize) {}
-				explicit config(const vector3<double>& s, const vector3<double>& o, unsigned int cs = DefaultChunkSize) :
-					scale(s), offset(o), chunk_size(cs) {}
+				explicit config(const vector3<double>& s = {1.0, 1.0, 1.0}, const vector3<double>& o = {0.0, 0.0, 0.0},
+                        unsigned int cs = DefaultChunkSize) : chunk_size(cs) {
+          base.scale  = {s.x, s.y, s.z};
+          base.offset = {o.x, o.y, o.z};
+        }
+
+        // Provide header values from some originating LAS file or preset them in code
+        explicit config(const header& h, unsigned int cs = DefaultChunkSize) : chunk_size(cs) {
+          base.file_source_id = h.file_source_id;
+          strncpy(base.guid, h.guid, 16);
+          strncpy(base.system_identifier, h.system_identifier, 32);
+          strncpy(base.generating_software, h.generating_software, 32);
+          base.creation = h.creation;
+          base.scale = h.scale;
+          base.offset = h.offset;
+        }
 
 				header to_header() const {
-					header h; memset(&h, 0, sizeof(h)); // clear out header
-					h.min = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+          header h = base;
+					h.min = {std::numeric_limits<double>::max(),    std::numeric_limits<double>::max(),    std::numeric_limits<double>::max()};
 					h.max = {std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()};
 
-					h.offset.x = offset.x;
-					h.offset.y = offset.y;
-					h.offset.z = offset.z;
-
-					h.scale.x = scale.x;
-					h.scale.y = scale.y;
-					h.scale.z = scale.z;
-
+          // Fill in current time if no preset creation instant is present
+          if(h.creation.year == 0) {
+            time_t t;
+            std::time(&t);
+            auto tm = std::gmtime(&t);
+            h.creation.day = tm->tm_yday;
+            h.creation.year = 1900 + tm->tm_year;
+          }
 					return h;
 				}
 			};
